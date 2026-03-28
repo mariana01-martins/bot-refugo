@@ -4,6 +4,8 @@ from datetime import datetime
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import os
+import json
 
 # ================== GOOGLE SHEETS ==================
 
@@ -12,17 +14,22 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    r"C:\Users\mariana.martins\OneDrive\Desktop\credenciais.json",
-    scope
-)
+# 🔥 FUNCIONA LOCAL E RENDER
+if os.environ.get("GOOGLE_CREDENTIALS"):
+    credenciais_dict = json.loads(os.environ.get("GOOGLE_CREDENTIALS"))
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, scope)
+else:
+    creds = ServiceAccountCredentials.from_json_keyfile_name(
+        "credenciais.json",
+        scope
+    )
 
 client = gspread.authorize(creds)
 planilha = client.open("REFUGO").sheet1
 
 # ================== TOKEN ==================
 
-TOKEN = "8534506057:AAECrvtZdpDcRbpnTvobaTZqSnsFmecRZtg"
+TOKEN = os.environ.get("TOKEN")
 
 # ================== GRUPO ==================
 
@@ -32,7 +39,7 @@ GROUP_ID = -5191123192
 
 DATA, PLACA, CATEGORIA, QUANTIDADE, CONFIRMAR, RESPONSAVEL = range(6)
 
-# ================== PLACAS (COMPLETO) ==================
+# ================== PLACAS ==================
 
 placas = [
     ["QRC-1G60", "QRD-0J81"],
