@@ -90,8 +90,15 @@ async def refugo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     context.user_data["itens"] = []
 
-    await update.message.reply_text("📦 Registro de Refugo\n\nVamos começar 👇")
-    await update.message.reply_text("Digite a data (dd/mm/aaaa) ou 'hoje':")
+    await update.message.reply_text(
+        "📦 *Registro de Refugo*\n\nVamos começar 👇",
+        parse_mode="Markdown"
+    )
+
+    await update.message.reply_text(
+        "📅 Digite a data (ex: 28/03/2026)\nOu digite *HOJE*",
+        parse_mode="Markdown"
+    )
     return DATA
 
 async def data(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -105,7 +112,7 @@ async def data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["data"] = data_formatada
 
     await update.message.reply_text(
-        "Escolha a placa:",
+        "🚛 Selecione a placa do veículo:",
         reply_markup=ReplyKeyboardMarkup(placas, resize_keyboard=True)
     )
     return PLACA
@@ -114,19 +121,21 @@ async def placa(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["placa"] = update.message.text
 
     await update.message.reply_text(
-        "Escolha o vasilhame:",
+        "📦 Escolha o tipo de vasilhame:",
         reply_markup=ReplyKeyboardMarkup(vasilhames, resize_keyboard=True)
     )
     return CATEGORIA
 
 async def categoria(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["categoria_temp"] = update.message.text
-    await update.message.reply_text("Digite a quantidade:")
+    await update.message.reply_text("🔢 Digite a quantidade:")
     return QUANTIDADE
 
 async def quantidade(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message.text.isdigit():
-        await update.message.reply_text("Digite apenas números:")
+        await update.message.reply_text(
+            "❌ Valor inválido\n👉 Digite apenas números (ex: 10)"
+        )
         return QUANTIDADE
 
     item = {
@@ -136,22 +145,21 @@ async def quantidade(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["itens"].append(item)
 
-    botoes = [["SIM", "NÃO"]]
     await update.message.reply_text(
-        "Deseja adicionar outro refugo?",
-        reply_markup=ReplyKeyboardMarkup(botoes, resize_keyboard=True)
+        "➕ Deseja adicionar outro refugo?",
+        reply_markup=ReplyKeyboardMarkup([["SIM", "NÃO"]], resize_keyboard=True)
     )
     return CONFIRMAR
 
 async def confirmar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.text == "SIM":
         await update.message.reply_text(
-            "Escolha o vasilhame:",
+            "📦 Escolha o tipo de vasilhame:",
             reply_markup=ReplyKeyboardMarkup(vasilhames, resize_keyboard=True)
         )
         return CATEGORIA
     else:
-        await update.message.reply_text("Digite o nome do responsável:")
+        await update.message.reply_text("👤 Digite o nome do responsável:")
         return RESPONSAVEL
 
 async def responsavel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -174,25 +182,27 @@ async def responsavel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         texto_itens += f"\n📦 {item['categoria']}: {item['quantidade']}"
 
     resposta = f"""
-📦 REGISTRO DE REFUGO
+📦 *REGISTRO DE REFUGO*
 
-📅 Data: {context.user_data['data']}
-🚛 Placa: {context.user_data['placa']}
+📅 *Data:* {context.user_data['data']}
+🚛 *Placa:* {context.user_data['placa']}
 {texto_itens}
 
-👤 Responsável: {context.user_data['responsavel']}
+👤 *Responsável:* {context.user_data['responsavel']}
 
 {status}
 """
 
     await update.message.reply_text(
         resposta,
+        parse_mode="Markdown",
         reply_markup=ReplyKeyboardRemove()
     )
 
     await context.bot.send_message(
         chat_id=GROUP_ID,
-        text=resposta
+        text=resposta,
+        parse_mode="Markdown"
     )
 
     return ConversationHandler.END
@@ -240,5 +250,5 @@ def run_server():
 # ================== EXECUÇÃO ==================
 
 if __name__ == "__main__":
-    threading.Thread(target=run_server).start()
+    threading.Thread(target=run_server, daemon=True).start()
     run_bot()
