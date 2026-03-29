@@ -6,6 +6,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # ================== GOOGLE SHEETS ==================
 
@@ -14,7 +16,6 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-# 🔥 FUNCIONA LOCAL E RENDER
 if os.environ.get("GOOGLE_CREDENTIALS"):
     credenciais_dict = json.loads(os.environ.get("GOOGLE_CREDENTIALS"))
     creds = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, scope)
@@ -196,9 +197,9 @@ async def responsavel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     return ConversationHandler.END
 
-# ================== MAIN ==================
+# ================== BOT ==================
 
-def main():
+def run_bot():
     app = ApplicationBuilder().token(TOKEN).build()
 
     conv = ConversationHandler(
@@ -222,5 +223,22 @@ def main():
     print("Bot rodando...")
     app.run_polling()
 
+# ================== SERVIDOR (RENDER FREE) ==================
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'OK')
+
+def run_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), Handler)
+    print(f"Servidor rodando na porta {port}")
+    server.serve_forever()
+
+# ================== EXECUÇÃO ==================
+
 if __name__ == "__main__":
-    main()
+    threading.Thread(target=run_server).start()
+    run_bot()
